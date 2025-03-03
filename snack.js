@@ -66,12 +66,19 @@ console.log('Titoli dei libri:', longBooksTitles)
 
 const availableBooks = books.filter(book => book.available === true)
 const discountedBooks = availableBooks.map(book => {
-    const price = parseFloat(book.price)
-    const discount = (price * 20 / 100)
-    return (price - discount).toFixed(2)
+    const price = parseFloat(book.price.replace('€', ''))
+    const discount = price * 20 / 100
+    const discountedPrice = (price - discount).toFixed(2)
+    return {
+        ...book,
+        price: `${discountedPrice}€`
+    }
 })
 
-const fullPricedBook = discountedBooks.find(book => Number.isInteger(parseFloat(book)))
+const fullPricedBook = discountedBooks.find(book => {
+    const price = parseFloat(book.price.replace('€', ''))
+    return Number.isInteger(price)
+})
 
 console.log('Libri disponibili:', availableBooks)
 console.log('Libri scontati:', discountedBooks)
@@ -87,7 +94,7 @@ console.log('Libro a prezzo intero:', fullPricedBook)
 
 const authors = books.map(book => book.author)
 const areAuthorsAdults = authors.every(author => author.age >= 18)
-authors.sort((a, b) => a.age < b.age)
+authors.sort((a, b) => b.age - a.age)
 
 console.log('Autori per età decrescente:', authors)
 console.log('Autori tutti maggiorenni?:', areAuthorsAdults)
@@ -144,8 +151,13 @@ getBooks([2, 13, 7, 21, 19]).then(books => console.log(books))
 */
 
 const areThereAvailableBooks = books.some(book => book.available === true)
-const booksByPrice = books.sort((a, b) => parseFloat(a.price) - parseFloat(b.price))
-booksByPrice.sort((a, b) => b.available - a.available)
+const booksByPrice = books.sort((a, b) => {
+    const priceA = parseFloat(a.price.replace('€', ''))
+    const priceB = parseFloat(b.price.replace('€', ''))
+    return priceA - priceB
+})
+// booksByPrice.sort((a, b) => b.available - a.available)
+booksByPrice.sort((a, b) => a.available === b.available ? 0 : a.available ? -1 : 1)
 
 console.log('Almeno un libro è disponibile?:', areThereAvailableBooks)
 console.log('Libri ordinati per prezzo in base a disponibilità:', booksByPrice)
@@ -157,11 +169,12 @@ Usa reduce per creare un oggetto (tagCounts) che conta quante volte ogni tag vie
 
 const tagCounts = books.reduce((acc, book) => {
     book.tags.forEach(tag => {
-        if (acc[tag]) {
-            acc[tag]++
-        } else {
-            acc[tag] = 1
+        // Se nell'accumulatore non esiste la proprietà tag, l'accumulo si incrementa di zero
+        if (!acc[tag]) {
+            acc[tag] = 0
         }
+        // Altrimenti l'accumulo si incrementa di uno
+        acc[tag]++
     })
     return acc
 }, {})
